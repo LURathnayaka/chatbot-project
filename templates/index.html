@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Chatbot</title>
+    <title>Unimind</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="chat-container">
-        <h1>Unimind-Chatbot</h1>
+        <h1>Unimind Chatbot</h1>
         <div class="chat-box" id="chatBox">
-        
+      
         </div>
         <div class="input-area">
             <input type="text" id="userInput" placeholder="Type your message...">
@@ -24,12 +24,13 @@
             const message = userInput.value.trim();
             
             if (message) {
-                
+               
                 addMessage('user', message);
                 userInput.value = '';
                 
                 const thinkingId = addMessage('bot', 'Thinking...');
                 
+              
                 fetch('/get_response', {
                     method: 'POST',
                     headers: {
@@ -37,13 +38,26 @@
                     },
                     body: `message=${encodeURIComponent(message)}`
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     
-                    document.getElementById(thinkingId).textContent = data.response;
+                    const thinkingElement = document.getElementById(thinkingId);
+                    if (thinkingElement) {
+                        thinkingElement.textContent = data.response;
+                        thinkingElement.classList.remove('temp-message'); 
+                    }
                 })
                 .catch(error => {
-                    document.getElementById(thinkingId).textContent = "Sorry, I couldn't process your request.";
+                    const errorElement = document.getElementById(thinkingId);
+                    if (errorElement) {
+                        errorElement.textContent = "Sorry, I couldn't process your request.";
+                        errorElement.classList.remove('temp-message');
+                    }
                 });
             }
         }
@@ -55,14 +69,18 @@
             
             messageDiv.className = `message ${sender}`;
             messageDiv.id = messageId;
-            messageDiv.textContent = text;
+           
+            const contentPara = document.createElement('p');
+            contentPara.textContent = text;
+            messageDiv.appendChild(contentPara);
+            
             chatBox.appendChild(messageDiv);
             
             chatBox.scrollTop = chatBox.scrollHeight;
             
             return messageId;
         }
-
+        
         document.getElementById('userInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendMessage();
